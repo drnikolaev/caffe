@@ -82,13 +82,33 @@ void caffe_gpu_memcpy(const size_t N, const void* X, void* Y) {
 }
 
 template <>
-void caffe_gpu_scal<float>(const int N, const float alpha, float *X) {
+void caffe_gpu_scal<float>(const int N, const float alpha, float* X) {
   CUBLAS_CHECK(cublasSscal(Caffe::cublas_handle(), N, &alpha, X, 1));
 }
 
 template <>
-void caffe_gpu_scal<double>(const int N, const double alpha, double *X) {
+void caffe_gpu_scal<double>(const int N, const double alpha, double* X) {
   CUBLAS_CHECK(cublasDscal(Caffe::cublas_handle(), N, &alpha, X, 1));
+}
+
+template <>
+void caffe_gpu_scal<float>(const int N, const float alpha, float* X,
+    cudaStream_t str) {
+  cudaStream_t initial_stream;
+  CUBLAS_CHECK(cublasGetStream(Caffe::cublas_handle(), &initial_stream));
+  CUBLAS_CHECK(cublasSetStream(Caffe::cublas_handle(), str));
+  CUBLAS_CHECK(cublasSscal(Caffe::cublas_handle(), N, &alpha, X, 1));
+  CUBLAS_CHECK(cublasSetStream(Caffe::cublas_handle(), initial_stream));
+}
+
+template <>
+void caffe_gpu_scal<double>(const int N, const double alpha, double* X,
+    cudaStream_t str) {
+  cudaStream_t initial_stream;
+  CUBLAS_CHECK(cublasGetStream(Caffe::cublas_handle(), &initial_stream));
+  CUBLAS_CHECK(cublasSetStream(Caffe::cublas_handle(), str));
+  CUBLAS_CHECK(cublasDscal(Caffe::cublas_handle(), N, &alpha, X, 1));
+  CUBLAS_CHECK(cublasSetStream(Caffe::cublas_handle(), initial_stream));
 }
 
 template <>
@@ -128,14 +148,14 @@ void caffe_gpu_asum<double>(const int n, const double* x, double* y) {
 }
 
 template <>
-void caffe_gpu_scale<float>(const int n, const float alpha, const float *x,
+void caffe_gpu_scale<float>(const int n, const float alpha, const float* x,
                             float* y) {
   CUBLAS_CHECK(cublasScopy(Caffe::cublas_handle(), n, x, 1, y, 1));
   CUBLAS_CHECK(cublasSscal(Caffe::cublas_handle(), n, &alpha, y, 1));
 }
 
 template <>
-void caffe_gpu_scale<double>(const int n, const double alpha, const double *x,
+void caffe_gpu_scale<double>(const int n, const double alpha, const double* x,
                              double* y) {
   CUBLAS_CHECK(cublasDcopy(Caffe::cublas_handle(), n, x, 1, y, 1));
   CUBLAS_CHECK(cublasDscal(Caffe::cublas_handle(), n, &alpha, y, 1));

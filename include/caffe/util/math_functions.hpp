@@ -44,20 +44,20 @@ void caffe_cpu_eltwise_min(const int N, const Dtype alpha, const Dtype* X,
     const Dtype beta, Dtype* Y);
 
 template <typename Dtype>
-void caffe_copy(const int N, const Dtype *X, Dtype *Y);
+void caffe_copy(const int N, const Dtype* X, Dtype* Y);
 
 template <typename Dtype>
-void caffe_set(const int N, const Dtype alpha, Dtype *X);
+void caffe_set(const int N, const Dtype alpha, Dtype* X);
 
 inline void caffe_memset(const size_t N, const int alpha, void* X) {
   memset(X, alpha, N);  // NOLINT(caffe/alt_fn)
 }
 
 template <typename Dtype>
-void caffe_add_scalar(const int N, const Dtype alpha, Dtype *X);
+void caffe_add_scalar(const int N, const Dtype alpha, Dtype* X);
 
 template <typename Dtype>
-void caffe_scal(const int N, const Dtype alpha, Dtype *X);
+void caffe_scal(const int N, const Dtype alpha, Dtype* X);
 
 template <typename Dtype>
 void caffe_sqr(const int N, const Dtype* a, Dtype* y);
@@ -150,7 +150,7 @@ DEFINE_CAFFE_CPU_UNARY_FUNC(sgnbit, \
 DEFINE_CAFFE_CPU_UNARY_FUNC(fabs, y[i] = std::fabs(x[i]));
 
 template <typename Dtype>
-void caffe_cpu_scale(const int n, const Dtype alpha, const Dtype *x, Dtype* y);
+void caffe_cpu_scale(const int n, const Dtype alpha, const Dtype* x, Dtype* y);
 
 #ifndef CPU_ONLY  // GPU
 
@@ -176,10 +176,10 @@ template <typename Dtype>
 void caffe_gpu_axpby(const int N, const Dtype alpha, const Dtype* X,
     const Dtype beta, Dtype* Y);
 
-void caffe_gpu_memcpy(const size_t N, const void *X, void *Y);
+void caffe_gpu_memcpy(const size_t N, const void* X, void* Y);
 
 template <typename Dtype>
-void caffe_gpu_set(const int N, const Dtype alpha, Dtype *X);
+void caffe_gpu_set(const int N, const Dtype alpha, Dtype* X);
 
 inline void caffe_gpu_memset(const size_t N, const int alpha, void* X) {
 #ifndef CPU_ONLY
@@ -190,10 +190,15 @@ inline void caffe_gpu_memset(const size_t N, const int alpha, void* X) {
 }
 
 template <typename Dtype>
-void caffe_gpu_add_scalar(const int N, const Dtype alpha, Dtype *X);
+void caffe_gpu_add_scalar(const int N, const Dtype alpha, Dtype* X);
 
 template <typename Dtype>
-void caffe_gpu_scal(const int N, const Dtype alpha, Dtype *X);
+void caffe_gpu_scal(const int N, const Dtype alpha, Dtype* X);
+
+#ifndef CPU_ONLY
+template <typename Dtype>
+void caffe_gpu_scal(const int N, const Dtype alpha, Dtype* X, cudaStream_t str);
+#endif
 
 template <typename Dtype>
 void caffe_gpu_add(const int N, const Dtype* a, const Dtype* b, Dtype* y);
@@ -254,7 +259,7 @@ template <typename Dtype>
 void caffe_gpu_fabs(const int n, const Dtype* x, Dtype* y);
 
 template <typename Dtype>
-void caffe_gpu_scale(const int n, const Dtype alpha, const Dtype *x, Dtype* y);
+void caffe_gpu_scale(const int n, const Dtype alpha, const Dtype* x, Dtype* y);
 
 // y[i] = max(a * x[i], b * y[i])
 template <typename Dtype>

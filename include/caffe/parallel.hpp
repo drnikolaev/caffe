@@ -13,6 +13,7 @@
 #include "caffe/solver.hpp"
 #include "caffe/syncedmem.hpp"
 #include "caffe/util/blocking_queue.hpp"
+#include "caffe/util/nccl.hpp"
 
 namespace caffe {
 
@@ -89,7 +90,7 @@ class P2PSync : public GPUParams<Dtype>, public Solver<Dtype>::Callback,
     public InternalThread {
  public:
   explicit P2PSync(shared_ptr<Solver<Dtype> > root_solver,
-                   P2PSync<Dtype>* parent, const SolverParameter& param);
+                   int rank, int nranks, const SolverParameter& param);
   virtual ~P2PSync();
 
   inline const shared_ptr<Solver<Dtype> >& solver() const {
@@ -104,18 +105,46 @@ class P2PSync : public GPUParams<Dtype>, public Solver<Dtype>::Callback,
   // Divide the batch size by the number of solvers
   static void divide_batch_size(NetParameter* net);
 
+#ifdef USE_NCCL
+  // set the NCCL communicator
+  void setNCCLComm(ncclComm_t comm, int param_id = 0);
+#endif
+
+ public:
+  void allreduce(int param_id);
+  void syncCommStream(int param_id);
  protected:
+  void SetupP2PAccess();
+
+  void soft_barrier();
   void on_start();
-  void on_gradients_ready();
+  void allreduce();
+  void syncAllStreams();
+#ifdef USE_NCCL
+  ncclComm_t getNCCLComm(int param_id = 0);
+#endif
+  cudaStream_t getCommStream(int param_id = 0);
 
   void InternalThreadEntry();
 
+  const int rank_;
+  const int nranks_;
   P2PSync<Dtype>* parent_;
   vector<P2PSync<Dtype>*> children_;
+#ifndef USE_NCCL
+  int parent_peer_access_;
+  int child_peer_access_;
+  Dtype* parent_grads_;
+  int *offset_;
+#else
+  std::vector<ncclComm_t> nccl_comms_;
+#endif
+  vector<cudaStream_t> comm_streams_;
   BlockingQueue<P2PSync<Dtype>*> queue_;
   const int initial_iter_;
-  Dtype* parent_grads_;
+
   shared_ptr<Solver<Dtype> > solver_;
+  const SolverParameter& params_;
 
   using Params<Dtype>::size_;
   using Params<Dtype>::data_;
