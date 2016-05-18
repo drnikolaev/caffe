@@ -337,8 +337,6 @@ endif
 # NCCL acceleration configuration
 ifeq ($(USE_NCCL), 1)
 	LIBRARIES += nccl
-	INCLUDE_DIRS += $(NCCL_DIR)/include
-	LIBRARY_DIRS += $(NCCL_DIR)/lib
 	COMMON_FLAGS += -DUSE_NCCL
 endif
 
