@@ -46,11 +46,14 @@ class GradientBasedSolverTest : public MultiDeviceTest<TypeParam> {
   // Test data: check out generate_sample_data.py in the same directory.
   string* input_file_;
 
+  virtual const char *solver_type() = 0;
+
   virtual void InitSolver(const SolverParameter& param) = 0;
 
   virtual void InitSolverFromProtoString(const string& proto) {
     SolverParameter param;
     CHECK(google::protobuf::TextFormat::ParseFromString(proto, &param));
+    param.set_type(solver_type());
     // Set the solver_mode according to current Caffe::mode.
     switch (Caffe::mode()) {
       case Caffe::CPU:
@@ -201,10 +204,7 @@ class GradientBasedSolverTest : public MultiDeviceTest<TypeParam> {
           gpus.push_back(i);
       }
       Caffe::set_solver_count(gpus.size());
-      SolverParameter param_with_type = this->solver_->param();
-      param_with_type.set_solver_type(param_with_type.solver_type());
-
-      P2PSync<Dtype> sync(this->solver_, 0, gpus.size(), param_with_type);
+      P2PSync<Dtype> sync(this->solver_, 0, gpus.size(), this->solver_->param());
       sync.Run(gpus);
       Caffe::set_solver_count(1);
     }
@@ -575,6 +575,9 @@ class SGDSolverTest : public GradientBasedSolverTest<TypeParam> {
   virtual void InitSolver(const SolverParameter& param) {
     this->solver_.reset(new SGDSolver<Dtype>(param));
   }
+  virtual const char *solver_type() {
+    return "SGD";
+  }
 };
 
 TYPED_TEST_CASE(SGDSolverTest, TestDtypesAndDevices);
@@ -711,6 +714,9 @@ class AdaGradSolverTest : public GradientBasedSolverTest<TypeParam> {
   virtual void InitSolver(const SolverParameter& param) {
     this->solver_.reset(new AdaGradSolver<Dtype>(param));
   }
+  virtual const char *solver_type() {
+    return "AdaGrad";
+  }
 };
 
 TYPED_TEST_CASE(AdaGradSolverTest, TestDtypesAndDevices);
@@ -810,6 +816,9 @@ class NesterovSolverTest : public GradientBasedSolverTest<TypeParam> {
  protected:
   virtual void InitSolver(const SolverParameter& param) {
     this->solver_.reset(new NesterovSolver<Dtype>(param));
+  }
+  virtual const char *solver_type() {
+    return "Nesterov";
   }
 };
 
@@ -943,6 +952,9 @@ class AdaDeltaSolverTest : public GradientBasedSolverTest<TypeParam> {
  protected:
   virtual void InitSolver(const SolverParameter& param) {
     this->solver_.reset(new AdaDeltaSolver<Dtype>(param));
+  }
+  virtual const char *solver_type() {
+    return "AdaDelta";
   }
 };
 
@@ -1078,6 +1090,9 @@ class AdamSolverTest : public GradientBasedSolverTest<TypeParam> {
     new_param.set_momentum2(momentum2);
     this->solver_.reset(new AdamSolver<Dtype>(new_param));
   }
+  virtual const char *solver_type() {
+    return "Adam";
+  }
 };
 
 TYPED_TEST_CASE(AdamSolverTest, TestDtypesAndDevices);
@@ -1177,6 +1192,9 @@ class RMSPropSolverTest : public GradientBasedSolverTest<TypeParam> {
     SolverParameter new_param = param;
     new_param.set_rms_decay(rms_decay);
     this->solver_.reset(new RMSPropSolver<Dtype>(new_param));
+  }
+  virtual const char *solver_type() {
+    return "RMSProp";
   }
 };
 
