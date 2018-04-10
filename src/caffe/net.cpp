@@ -686,6 +686,12 @@ float Net::ForwardFromTo(int start, int end) {
     // << "' FT " << Type_Name(layers_[i]->forward_type())
     // << " BT " << Type_Name(layers_[i]->backward_type());
     float layer_loss = layers_[i]->Forward(bottom_vecs_[i], top_vecs_[i]);
+    if (std::isnan(layer_loss)) {
+      LOG(ERROR) << " ****** [Forward] (" << i << ") Layer '" << layer_names_[i]
+         << "' of type " << layers_[i]->type()
+         << ", FT " << Type_Name(layers_[i]->forward_type())
+         << " BT " << Type_Name(layers_[i]->backward_type()) << " returned loss = " << layer_loss;
+    }
     loss += layer_loss;
     if (debug_info_) { ForwardDebugInfo(i); }
   }

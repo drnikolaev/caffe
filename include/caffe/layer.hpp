@@ -355,6 +355,14 @@ class LayerBase {
     net_inititialized_flag_ = init_flag;
   }
 
+  Type forward_type() const {
+    return layer_param_.forward_type();
+  }
+
+  Type backward_type() const {
+    return layer_param_.backward_type();
+  }
+
   /**
    * Some layers need to be initialized after first iteration
    * They should override this function and return a flag
@@ -564,6 +572,17 @@ inline float Layer<Ftype, Btype>::Forward(const vector<Blob*>& bottom, const vec
         float blob_loss = 0.F;
         caffe_gpu_dot(count, data, loss_weights, &blob_loss);
         loss += blob_loss;
+
+        if (std::isnan(loss)) {
+          LOG(ERROR) << " ****** Forward CPU Layer '" << name()
+                     << "' of type " << type()
+                     << ", FT " << Type_Name(forward_type())
+                     << " BT " << Type_Name(backward_type())
+                     << " returned loss: " << loss
+                     << " count: " << count
+                     << " blob_loss: " << blob_loss;
+        }
+
       }
       break;
     default:

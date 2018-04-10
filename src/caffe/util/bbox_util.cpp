@@ -646,21 +646,39 @@ void MatchBBox(const vector<NormalizedBBox>& gt_bboxes,
         // The prediction already has matched ground truth or is ignored.
         continue;
       }
-      for (int j : gt_pool) {
-        auto joverlap = it->second.find(j);
-        if (joverlap == it->second.end()) {
-          // No overlap between the i-th prediction and j-th ground truth.
-          continue;
-        }
-        // Find the maximum overlapped pair.
-        if (joverlap->second > max_overlap) {
-          // If the prediction has not been matched to any ground truth,
-          // and the overlap is larger than maximum overlap, update.
-          max_idx = i;
-          max_gt_idx = j;
-          max_overlap = joverlap->second;
+
+      for (auto ov_map : it->second) {
+        const int j = ov_map.first;
+        if (gt_pool.count(j) > 0) {
+          // Find the maximum overlapped pair.
+          if (ov_map.second > max_overlap) {
+            // If the prediction has not been matched to any ground truth,
+            // and the overlap is larger than maximum overlap, update.
+            max_idx = i;
+            max_gt_idx = j;
+            max_overlap = ov_map.second;
+          }
         }
       }
+
+//      for (int j : gt_pool) {
+//        auto joverlap = it->second.find(j);
+//        if (joverlap == it->second.end()) {
+//          // No overlap between the i-th prediction and j-th ground truth.
+//          continue;
+//        }
+//        // Find the maximum overlapped pair.
+//        if (joverlap->second > max_overlap) {
+//          // If the prediction has not been matched to any ground truth,
+//          // and the overlap is larger than maximum overlap, update.
+//          max_idx = i;
+//          max_gt_idx = j;
+//          max_overlap = joverlap->second;
+//        }
+//      }
+
+
+
     }
     if (max_idx == -1) {
       // Cannot find good match.
@@ -680,8 +698,7 @@ void MatchBBox(const vector<NormalizedBBox>& gt_bboxes,
       break;
     case MultiBoxLossParameter_MatchType_PER_PREDICTION:
       // Get most overlaped for the rest prediction bboxes.
-      for (map<int, map<int, float> >::iterator it = overlaps.begin();
-           it != overlaps.end(); ++it) {
+      for (auto it = overlaps.begin(); it != overlaps.end(); ++it) {
         int i = it->first;
         if ((*match_indices)[i] != -1) {
           // The prediction already has matched ground truth or is ignored.
@@ -689,13 +706,14 @@ void MatchBBox(const vector<NormalizedBBox>& gt_bboxes,
         }
         int max_gt_idx = -1;
         float max_overlap = -1;
-        for (int j = 0; j < num_gt; ++j) {
-          if (it->second.find(j) == it->second.end()) {
+        for (auto ov_map : it->second) {
+          const int j = ov_map.first;
+          if (j >= num_gt) {
             // No overlap between the i-th prediction and j-th ground truth.
             continue;
           }
           // Find the maximum overlapped pair.
-          float overlap = it->second[j];
+          float overlap = ov_map.second;
           if (overlap >= overlap_threshold && overlap > max_overlap) {
             // If the prediction has not been matched to any ground truth,
             // and the overlap is larger than maximum overlap, update.
@@ -1063,16 +1081,19 @@ void GetGroundTruth(const Dtype* gt_data, const int num_classes, const int num_g
   for (int i = 0; i < num_gt; ++i) {
     int start_idx = i * 8;
     int item_id = gt_data[start_idx];
+
+//    LOG(WARNING) << "### " << gt_data[start_idx] << " " << gt_data[start_idx + 1] << " " << gt_data[start_idx + 2] << " " << gt_data[start_idx + 3] << " " << gt_data[start_idx + 4] << " " << gt_data[start_idx + 5];
+
     if (item_id == -1) {
       continue;
     }
     int label = std::round(gt_data[start_idx + 1]);
     if (label <= background_label_id) {
-      DLOG(WARNING) << "Ignoring background label in the dataset: " << gt_data[start_idx + 1];
+      LOG(WARNING) << "Ignoring background label in the dataset: " << gt_data[start_idx + 1];
       continue;
     }
     if (label >= num_classes) {
-      DLOG(WARNING) << "Ignoring label >= num_classes in the dataset: " << gt_data[start_idx + 1];
+      LOG(WARNING) << "Ignoring label >= num_classes in the dataset: " << gt_data[start_idx + 1];
       continue;
     }
     bool difficult = static_cast<bool>(gt_data[start_idx + 7]);
@@ -1118,11 +1139,11 @@ void GetGroundTruth(const Dtype* gt_data, const int num_classes, const int num_g
     NormalizedBBox bbox;
     int label = std::round(gt_data[start_idx + 1]);
     if (label <= background_label_id) {
-      DLOG(WARNING) << "Ignoring background label in the dataset: " << gt_data[start_idx + 1];
+      LOG(WARNING) << "Ignoring background label in the dataset: " << gt_data[start_idx + 1];
       continue;
     }
     if (label >= num_classes) {
-      DLOG(WARNING) << "Ignoring label >= num_classes in the dataset: " << gt_data[start_idx + 1];
+      LOG(WARNING) << "Ignoring label >= num_classes in the dataset: " << gt_data[start_idx + 1];
       continue;
     }
     bool difficult = static_cast<bool>(gt_data[start_idx + 7]);
