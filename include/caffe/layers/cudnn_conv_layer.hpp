@@ -41,7 +41,6 @@ class CuDNNConvolutionLayer : public ConvolutionLayer<Ftype, Btype> {
   static constexpr int MAX_PARALLEL_GROUPS = Caffe::MAX_CONV_GROUPS;
   static constexpr int REQUEST_ALGO_COUNT = 1;
   static constexpr int ATTEMPTS_TO_RESERVE_WS = 3;
-  static constexpr int REALLOC_COUNT = 3;
 
   static std::atomic<size_t> train_mem_req_all_grps_;
   static std::atomic<size_t> test_mem_req_all_grps_;
@@ -106,9 +105,6 @@ class CuDNNConvolutionLayer : public ConvolutionLayer<Ftype, Btype> {
   bool use_modest_workspace() const {
     return fwd_count_ < 2UL;
   }
-  bool ok_to_release() const {
-    return bwd_count_ == REALLOC_COUNT;
-  }
 
   void FindExConvAlgo(const vector<Blob*>& bottom, const vector<Blob*>& top);
   void GetConvAlgo(const vector<Blob*>& bottom, const vector<Blob*>& top,
@@ -162,8 +158,6 @@ template<typename Ftype, typename Btype>
 constexpr int CuDNNConvolutionLayer<Ftype, Btype>::REQUEST_ALGO_COUNT;
 template<typename Ftype, typename Btype>
 constexpr int CuDNNConvolutionLayer<Ftype, Btype>::ATTEMPTS_TO_RESERVE_WS;
-template<typename Ftype, typename Btype>
-constexpr int CuDNNConvolutionLayer<Ftype, Btype>::REALLOC_COUNT;
 
 template<typename Ftype, typename Btype>
 std::atomic<size_t> CuDNNConvolutionLayer<Ftype, Btype>::train_mem_req_all_grps_;

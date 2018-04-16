@@ -306,16 +306,17 @@ void CuDNNConvolutionLayer<Ftype, Btype>::Reshape(
   if (initialized_cached_descs_) {
     // Check whether bottom and conv descriptors have changed,
     // which then requires a new reshape and set algo.
-    if (IsBottomDescChanged(bottom, true) || IsBottomDescChanged(bottom, false) ||
-        IsConvDescChanged(bottom, true) || IsConvDescChanged(bottom, false)) {
+    if (IsBottomDescChanged(bottom, true) ||
+        (this->phase_ == TRAIN && IsBottomDescChanged(bottom, false)) ||
+        IsConvDescChanged(bottom, true) ||
+        (this->phase_ == TRAIN && IsConvDescChanged(bottom, false))) {
       use_reshape_ = true;
     } else {
       // When no reshape is needed, setting algo may be still needed
       // (for example, if we are at iteration 1).
       // If we want to set algos, we have to use reshape in
       // current implementation.
-      // Also, after 2 runs we have to release some space if it's not needed.
-      use_reshape_ = use_algo_seeker_ || ok_to_release();
+      use_reshape_ = use_algo_seeker_;
     }
   } else {
     // If cached descriptors are not initialized yet, need to

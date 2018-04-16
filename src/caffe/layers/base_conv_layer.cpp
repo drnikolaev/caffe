@@ -98,7 +98,7 @@ void BaseConvolutionLayer<Ftype, Btype>::LayerSetUp(const vector<Blob*>& bottom,
   // and no padding, so flag for skipping the buffer and transformation.
   is_1x1_ = true;
   for (int i = 0; i < num_spatial_axes_; ++i) {
-    is_1x1_ &= kernel_shape_data[i] == 1 && stride_data[i] == 1 && pad_data[i] == 0;
+    is_1x1_ = is_1x1_ && kernel_shape_data[i] == 1 && stride_data[i] == 1 && pad_data[i] == 0;
     if (!is_1x1_) { break; }
   }
   // Configure output channels and groups.
